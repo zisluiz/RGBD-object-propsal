@@ -36,24 +36,25 @@ ind = setdiff(ind, planeIdx);
 % get remaining points
 pcd = pts(ind, :);
 pcd = pcd/100; % convert to meters
-pcdFile = fullfile('src/segmentations', [num2str(pid) '.pcd']);
-mat2PCDfile(pcdFile,double(pcd));
+%pcdFile = fullfile('src/segmentations', [num2str(pid) '.pcd']);
+%mat2PCDfile(pcdFile,double(pcd));
 
 
 
 %% clustering
 segMasks = [];
+pCloudPcd = pointCloud(double(pcd));
 clusterTolerance = clusterTolerance/100; % use meters
 for i = 1 : numel(clusterTolerance)
     % euclidean clustering
-    system(sprintf('src/segmentations/m_pcd_clustering.out %s %d %d', ...
-                   pcdFile, clusterTolerance(i), pid));
+    %system(sprintf('src/segmentations/m_pcd_clustering.out %s %d %d', ...
+    %               pcdFile, clusterTolerance(i), pid));
     % read in result from text file
-    txtFile = ['clusters_', num2str(pid), '.txt'];
-    clusters = load(fullfile('./', txtFile));
+    %txtFile = ['clusters_', num2str(pid), '.txt'];
+    %clusters = load(fullfile('./', txtFile));
+    [clusters,numClusters] = pcsegdist(pCloudPcd, clusterTolerance(i));
     % save mask
-    nC = max(clusters);
-    for j = 1 : nC
+    for j = 1 : numClusters
         tmp = zeros(h, w);
         idx = ind(clusters == j);
         tmp(idx) = 1;
@@ -61,7 +62,7 @@ for i = 1 : numel(clusterTolerance)
         mask{1,1} = find(tmp);
         segMasks = cat(1, segMasks, mask);
     end
-    system(['rm ./', txtFile]);
+    %system(['rm ./', txtFile]);
 end
 
 
@@ -74,7 +75,7 @@ segMasks = segMasks(idx);
 [bbox, ind] = RemoveDupBbox(bbox, 0.8);
 segMasks = segMasks(ind);
 
-system(['rm ' pcdFile]);
+%system(['rm ' pcdFile]);
 end
 
 % function m_vis_clustering(pcd, clusters)
