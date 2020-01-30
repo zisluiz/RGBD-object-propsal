@@ -22,21 +22,12 @@ if ~exist(sp_path, 'dir')
    mkdir(sp_path);
 end
 
-fid = fopen(strcat('results/run_', num2str(posixtime(datetime('now')) * 1e6), '.txt'), 'wt');
-fprintf(fid, '=== Start time: %s\n', datestr(datetime('now')));
-
 datasetdir = 'datasets/selection';
 images = [dir(fullfile(datasetdir,'**/rgb/*.jpg')); dir(fullfile(datasetdir,'**/rgb/*.png'))];
 images = images(~[images.isdir]);  %remove folders from list
 filesCount = 0;
 scaleImage = 2;
 
-pid = int16(feature('getpid'));
-
-tStart = datetime('now');
-
-%parpool(4);
-%parfor k = 1:length(images), 4
 for k = 1:length(images)
     imageRgb = images(k);
     display(strcat('Processing image ', imageRgb.name));
@@ -83,32 +74,22 @@ for k = 1:length(images)
     %pcloud = Depth2PCD(depth_fill) * 100;    
     
     [planeMat, planeRgb] = fnPlaneSegmentation(pcloud, depth);
-    [status,cmdout] = unix(strcat('top -n 1 -p ', num2str(pid)));
-    fprintf(fid, "%s\n", cmdout);
     
     BBox = fnSuperpixel2Bbox(rgb, depth, pcloud, planeMat, imageName, sp_path);
-    [status,cmdout] = unix(strcat('top -n 1 -p ', num2str(pid)));
-    fprintf(fid, "%s\n", cmdout);
-    
-    seg = fnSegmentProposal(rgb, depth, BBox, sp_path, imageName);    
-    [status,cmdout] = unix(strcat('top -n 1 -p ', num2str(pid)));
-    fprintf(fid, "%s\n", cmdout);
-    
-    if ~exist(strcat('results/', datasetName), 'dir')
-       mkdir(strcat('results/', datasetName));
+
+    [seg, seg_GC2D, seg_GC3D] = fnSegmentProposal(rgb, depth, BBox, sp_path, imageName);    
+
+    if ~exist(strcat('tests/', datasetName), 'dir')
+       mkdir(strcat('tests/', datasetName));
     end    
     
-    imwrite(seg, strcat('results/', datasetName, '/', depthFileName));
+    imwrite(seg, strcat('tests/', datasetName, '/', imageName, '_seg.png'));
+    imwrite(seg_GC2D, strcat('tests/', datasetName, '/', imageName, '_seg_GC2D.png'));
+    imwrite(seg_GC3D, strcat('tests/', datasetName, '/', imageName, '_seg_GC3D.png'));
+    imwrite(planeRgb, strcat('tests/', datasetName, '/', imageName, '_plane.png'));
+    imwrite(rgb, strcat('tests/', datasetName, '/', imageName, '_ori.png'));
     filesCount = filesCount + 1;
     fprintf('Processed file %d\n', filesCount);
 end
-
-tEnd = datetime('now');
-tElapsed = between(tStart, tEnd);
-
-fprintf(fid, "=== Total image predicted: %d\n", filesCount);
-fprintf(fid, "=== Seconds per image: %d\n", (seconds(time(tElapsed)) / filesCount));
-fprintf(fid, '=== End time: %s\n', datestr(datetime('now')));
-fclose(fid);
 
 fprintf('done\n');

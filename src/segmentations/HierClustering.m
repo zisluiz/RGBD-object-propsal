@@ -35,24 +35,29 @@ ind = ind(~isMissing);
 ind = setdiff(ind, planeIdx);
 % get remaining points
 pcd = pts(ind, :);
-pcd = pcd/100; % convert to meters
-%pcdFile = fullfile('src/segmentations', [num2str(pid) '.pcd']);
-%mat2PCDfile(pcdFile,double(pcd));
-
+%pcd = pcd/100; % convert to meters
+pcdFile = fullfile('src/segmentations', [pid '.pcd']);
+mat2PCDfile(pcdFile,double(pcd));
+%ptCloud = pointCloud(double(pcd));
+%ptCloudSingle = pointCloud(single(ptCloud.Location),...
+%                           'Color',ptCloud.Color,...
+%                           'Normal',ptCloud.Normal,...
+%                           'Intensity',ptCloud.Intensity);
 
 
 %% clustering
 segMasks = [];
-pCloudPcd = pointCloud(double(pcd));
 clusterTolerance = clusterTolerance/100; % use meters
-for i = 1 : numel(clusterTolerance)
+for i = 1 : numel(clusterTolerance)    
     % euclidean clustering
+    ptCloud = pcread(pcdFile);
     %system(sprintf('src/segmentations/m_pcd_clustering.out %s %d %d', ...
     %               pcdFile, clusterTolerance(i), pid));
     % read in result from text file
     %txtFile = ['clusters_', num2str(pid), '.txt'];
     %clusters = load(fullfile('./', txtFile));
-    [clusters,numClusters] = pcsegdist(pCloudPcd, clusterTolerance(i));
+    minDistance = clusterTolerance(i)/10000;
+    [clusters,numClusters] = pcsegdist(ptCloud, minDistance);
     % save mask
     for j = 1 : numClusters
         tmp = zeros(h, w);

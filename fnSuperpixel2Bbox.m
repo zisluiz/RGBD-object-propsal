@@ -47,7 +47,7 @@ function [BBox] = fnSuperpixel2Bbox(imageRgb, rawDepth, pCloud, planeMat, imageN
    
    % hierarchical clustering
    clusterTolerance = [2, 5, 10];
-   [bbox_hc, masksHC_cell] = HierClustering(pCloud, clusterTolerance, inliers, isV, isH, isB, i);
+   [bbox_hc, masksHC_cell] = HierClustering(pCloud, clusterTolerance, inliers, isV, isH, isB, imageName);
    BB1 = m_rescale_bbox(bbox_hc, [h,w], 1.3);
    bbox_hc = cat(1, bbox_hc, BB1);
    

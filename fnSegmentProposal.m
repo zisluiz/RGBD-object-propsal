@@ -1,4 +1,5 @@
-function [seg] = fnSegmentProposal(imageRgb, rawDepth, BB, sp_path, imageName)
+function [seg, seg_GC2D_res, seg_GC3D_res] = fnSegmentProposal(imageRgb, rawDepth, BB, sp_path, imageName)
+    clear seg_GC2D seg_GC3D; 
     [h, w] = size(rawDepth);
     
     % fill holes based on color  
@@ -11,10 +12,12 @@ function [seg] = fnSegmentProposal(imageRgb, rawDepth, BB, sp_path, imageName)
     % GC2D
     disp('Run GrabCut (RGB) ...');
     seg_GC2D = m_mask5GC_cell(imageRgb, BB, true);
+    seg_GC2D_res = seg_GC2D;
     
     % GC3D
     disp('Run GrabCut (RGB-D) ...');
     seg_GC3D = m_mask5GC3D_cell(imageRgb, pcd,  BB, true);
+    seg_GC3D_res = seg_GC3D;
  
     % load Watershed masks
     var = load(fullfile('cache/sp', imageName, 'WSMasks_c.mat'));
@@ -30,7 +33,7 @@ function [seg] = fnSegmentProposal(imageRgb, rawDepth, BB, sp_path, imageName)
     
     % remove duplicated
     seg = RemoveDupGCxD(seg_GC2D, seg_GC3D, [h, w]);
-    clear seg_GC2D seg_GC3D; 
+    %clear seg_GC2D seg_GC3D; 
     segCells = cat(1, seg, seg_DP, seg_WS, seg_MS);
     clear seg_DP seg_WS seg_MS seg;
     fprintf('number of segs (before): %d\n', numel(segCells));
@@ -41,17 +44,7 @@ function [seg] = fnSegmentProposal(imageRgb, rawDepth, BB, sp_path, imageName)
     
     %imwrite(ICopy, [res_segfull_path, '/', imageName, 'ori', '.png']);
     
-    for seg = 1 : length(seg_Full)
-        randomColor = [randi([1 256]), randi([1 256]), randi([1 256])];
-    
-        for point = 1 : length(seg_Full{seg, 1})
-            objIndex = seg_Full{seg, 1}(point);
-            [r,c]=ind2sub(size(imageRgb),objIndex);         
-            imageRgb(r, c, :) = randomColor;
-        end
-    end  
-        
-    seg = imageRgb;
-
+    seg = Points2Image(seg_Full, imageRgb);
+    seg_GC2D_res = Points2Image(seg_GC2D_res, imageRgb);
+    seg_GC3D_res = Points2Image(seg_GC3D_res, imageRgb);
 end
-
