@@ -53,21 +53,27 @@ for k = 1:length(images)
     imageDepthOriginal = imread(strcat(datasetPath, '/depth/', depthFileName));
 
     if datasetName == "active_vision" || datasetName == "putkk"
-        imageRgbOriginal = imcrop(imageRgbOriginal, [420 1 1079 1080]);
-        imageDepthOriginal = imcrop(imageDepthOriginal, [420 1 1079 1080]);
+        imageRgbOriginal = imcrop(imageRgbOriginal, [240 1 1439 1080]);
+        imageDepthOriginal = imcrop(imageDepthOriginal, [240 1 1439 1080]);
     end
 
-    rgb = imresize(imageRgbOriginal, size(imageRgbOriginal(:,:,1))/scaleImage); 
-    depth = imresize(imageDepthOriginal, size(imageDepthOriginal(:,:,1))/scaleImage);    
+    rgb = imresize(imageRgbOriginal, size(imageRgbOriginal(:,:,1))/scaleImage, 'nearest'); 
+    depth = imresize(imageDepthOriginal, size(imageDepthOriginal(:,:,1))/scaleImage, 'nearest');    
     
     depthDouble=im2double(depth);
     %depthDouble=im2double(depth)/10000;
     %depthDouble=im2double(depth);
 
     %kinectv2 average
-    focal = 1078.68499;
-    topleft = [1 1];
-    center = [952.6592286 530.7386644];
+    if datasetName == "active_vision" || datasetName == "putkk"
+        topleft = [0 0];
+        center = [953 531];
+        focal = 1078.7;    
+    else
+        topleft = [0 0];
+        center = [540 540];
+        focal = 759.681;    
+    end
 
     [pcloud, distance] = DepthtoCloud(depthDouble, topleft, center, focal);  
     
